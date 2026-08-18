@@ -13,10 +13,12 @@ function M.stop_lsp()
     local is_lsp_client_excluded =
         vim.tbl_contains(config.excluded_lsp_clients, client.name)
 
-    -- Stop lsp client
+    -- Stop lsp client. Graceful shutdown only: rpc.terminate() SIGTERMs the
+    -- server before the shutdown handshake completes, and servers that fork
+    -- helpers (e.g. vtsls -> tsserver) only reap them on a normal exit, so a
+    -- signal death leaks the helper as an orphan.
     if not is_lsp_client_excluded then
       client:stop()
-      client.rpc.terminate()
       stopped_clients[client.name] = true
     end
   end
